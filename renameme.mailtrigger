@@ -1,0 +1,9 @@
+# This file should be saved as ~/.mailtrigger for configuration that will affect the mailtrigger script
+[Configuration]
+server = imap.gmail.com
+port = 993
+user = myusername@gmail.com
+password = myP@ssW0rd
+imaplabel = SodaPurchases
+audiofile = /home/pi/hadouken.wav
+logfilename = /var/log/mailtrigger.log
