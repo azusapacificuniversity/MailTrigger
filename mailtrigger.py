@@ -135,6 +135,8 @@ try:
 						pwSuccessCheck = True
 					except:
 						log.error("Unable to login!")
+						# 3 second delay before trying again
+						time.sleep(3)
 
 		try:
 			m.select(imaplabel)
@@ -142,7 +144,7 @@ try:
 			unreadcount = 0
 
 			# 'touch' the heartbeat file at this point
-			touch(heartbeatfile)
+			touch(heartbeatFile)
 
 			if len(response[0]) > 0:
 				unreadmessages = response[0].split()
