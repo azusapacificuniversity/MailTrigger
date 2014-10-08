@@ -24,7 +24,7 @@ import logging
 section = 'Configuration'
 config = ConfigParser.SafeConfigParser({ 'loggingfacility' : 'sodapurchases', 'pollinginterval' : '10', \
 	'pollrelogininterval' : '100', 'purchasedelay' : '10', 'relaypin' : '11', 'ledpin' : '12', \
- 	'logfilename' : '/var/log/mailtrigger.log' })
+ 	'logfilename' : '/var/log/mailtrigger.log', 'heartbeatfile' : '/tmp/mailtrigger' })
 
 # This is probably /root/.mailtrigger since the script has to be run as root to work
 config.read([os.path.expanduser('~/.mailtrigger')])
@@ -53,6 +53,8 @@ imaplabel = config.get(section,'imaplabel')
 pollingInterval = int(config.get(section,'pollinginterval'))
 #-Reconnect every so often to keep a fresh connection
 pollreloginInterval = int(config.get(section,'pollrelogininterval'))
+#-Get heartbeat file (it gets 'touch'ed as long as mailtrigger is successful)
+heartbeatFile = config.get(section,'heartbeatfile')
 #-Start the poll count at 1
 polledTimes = 1
 #-Set the connection to "None" (NULL)
@@ -92,6 +94,12 @@ GPIO.output(ledpin, False)
 # For some reason relyapin has to be "on" in order for the relay to be "off"
 GPIO.output(relaypin, True)
 
+# Define a function to 'touch' a file on success -- this is a sort of heartbeat to make sure script is running properly
+# Borrowed from: http://stackoverflow.com/questions/1158076/implement-touch-using-python
+def touch(fname, times=None):
+    with open(fname, 'a'):
+        os.utime(fname, times)
+
 try:
 	while True:
 		if m is None or (polledTimes % pollreloginInterval) == 0:
@@ -106,8 +114,9 @@ try:
 					log.warn("Failed to logout and close the connection!")
 					m = None
 
-			# Reset polledTimes and open an SSL connection
-			while m is None:
+			# Reset polledTimes and open an SSL connection + Try to login
+			pwSuccessCheck = False
+			while m is None or pwSuccessCheck == False:
 				try:
 					log.info("Connecting to the IMAP4 server through SSL.")
 					m = imaplib.IMAP4_SSL(server, port)
@@ -118,22 +127,23 @@ try:
 					# 3 second delay before trying to connect again
 					time.sleep(3)
 
-			# Attempt to login
-			pwSuccessCheck = False
-			while pwSuccessCheck == False:
-				try:
-					log.info("Logging in with saved credentials.")
-					m.login(user, password)
-					pwSuccessCheck = True
-				except:
-					log.error("Unable to login!")
-					# 3 second delay before trying to login again
-					time.sleep(3)
+				# Attempt to login
+				if m is not None:
+					try:
+						log.info("Logging in with saved credentials.")
+						m.login(user, password)
+						pwSuccessCheck = True
+					except:
+						log.error("Unable to login!")
 
 		try:
 			m.select(imaplabel)
 			status, response = m.search(None, "(UNSEEN)")
 			unreadcount = 0
+
+			# 'touch' the heartbeat file at this point
+			touch(heartbeatfile)
+
 			if len(response[0]) > 0:
 				unreadmessages = response[0].split()
 				unreadcount = len(unreadmessages)
