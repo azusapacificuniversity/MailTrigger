@@ -172,15 +172,6 @@ try:
 
 		if unreadcount > 0:
 			try:
-				try:
-					pymix.music.play()
-
-					# Wait until sound finishes
-					while pymix.music.get_busy() == True:
-						continue	
-				except:
-					log.error("Error while trying to play the sound!")
-
 				# Turn on the relay for 1/4 second to trigger 110VAC solenoid that opens soda machine
 				# Apparently for the relay -- False = "on", True = "off"
 				GPIO.output(relaypin, False)
@@ -189,7 +180,15 @@ try:
 
 				# Turn on LED indicating the purchase
 				GPIO.output(ledpin, True)
-				
+                
+				try:
+					pymix.music.play()
+
+					# Wait until sound finishes
+					while pymix.music.get_busy() == True:
+						continue	
+				except:
+					log.error("Error while trying to play the sound!")
 			except:
 				log.error("Error occured while triggering relay to solenoid or purchase led!")
 
