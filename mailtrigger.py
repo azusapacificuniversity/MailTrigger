@@ -66,7 +66,7 @@ purchaseDelay = int(config.get(section,'purchasedelay'))
 relaypin = int(config.get(section,'relaypin'))
 ledpin = int(config.get(section,'ledpin'))
 #-Just in case it hasn't been cleaned up yet
-GPIO.cleanup()
+#GPIO.cleanup()
 GPIO.setmode(GPIO.BOARD)
 
 # Audio Settings
@@ -209,4 +209,4 @@ try:
 		polledTimes = polledTimes + 1
 except KeyboardInterrupt:
 	log.critical("Script interrupted by keyboard!")
-	GPIO.cleanup()
+	#GPIO.cleanup()
